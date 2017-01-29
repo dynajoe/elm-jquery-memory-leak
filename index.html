@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+   <meta charset="utf-8">
+   <title>Elm App</title>
+   <link rel="stylesheet" href="http://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+   <style type="text/css">
+      html, body {
+         font-size: 20px;
+      }
+
+      a {
+         color: #428BCA;
+         text-decoration: none;
+      }
+
+      a:hover, a:focus {
+         color: #2A6496;
+         text-decoration: underline;
+      }
+
+      input, button {
+         font-size: 20px;
+         background-color: white;
+         border: 1px solid black;
+         border-style: solid;
+         padding: 10px;
+         border-radius: 5px;
+      }
+
+      .step-choices {
+         margin-top: 20px;
+      }
+   </style>
+</head>
+
+<body>
+   <div id="elm-root"></div>
+   <script src="elm.js"></script>
+   <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+   <script>
+      var app = Elm.Main.embed(document.getElementById('elm-root'));
+
+      function MemoryLeakMarker(created_on) {
+         this.created_on = created_on
+      }
+
+      app.ports.datePicker.subscribe(function (element_id) {
+         WaitForElement("#" + element_id)
+         .then(() => {
+            var marker = new MemoryLeakMarker(new Date())
+
+            var date_picker = $("#" + element_id).datepicker({
+               onSelect: function (x) {
+                  marker.selected_date = x
+                  app.ports.dateSelected.send(x)
+               }
+            });
+         })
+      })
+
+      function WaitForElement(selector) {
+         var tryCount = 5
+
+         return new Promise((resolve, reject) => {
+            const acquireElement = (tries) => {
+               setTimeout(() => {
+                  const element = document.querySelector(selector)
+
+                  if (!element && tries <= 0) {
+                     return reject(`Element not found [selector=${selector}].`)
+                  }
+                  else if (!element) {
+                     return acquireElement(tries - 1)
+                  }
+
+                  return resolve(element)
+               }, 50)
+            }
+
+            acquireElement(tryCount)
+         })
+      }
+
+   </script>
+</body>
+
+</html>
